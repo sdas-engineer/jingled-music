@@ -1,4 +1,4 @@
-# Replay — Setup Guide
+# Jingled — Setup Guide
 
 ## Prerequisites
 
@@ -9,16 +9,16 @@
 ## 1. Install dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 ## 2. Configure environment
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
-Fill in `.env.local`:
+Fill in `.env`:
 
 | Variable | Description |
 |---|---|
@@ -39,14 +39,14 @@ Fill in `.env.local`:
 ## 4. Database setup
 
 ```bash
-npm run db:push      # Push schema to database
-npm run db:generate  # Generate Prisma client
+pnpm db:push      # Push schema to database
+pnpm db:generate  # Generate Prisma client
 ```
 
 ## 5. Run development server
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
@@ -71,4 +71,4 @@ Spotify's recently played API only returns the last 50 tracks. For best results:
 2. Add all environment variables in Vercel dashboard
 3. For `SPOTIFY_REDIRECT_URI`, use your production URL: `https://your-app.vercel.app/api/auth/callback`
 4. Set up a PostgreSQL database (Neon, Supabase, or Railway work great)
-5. Run `npm run db:push` against your production DB once
+5. Run `pnpm db:push` against your production DB once

@@ -43,13 +43,13 @@ export default function LandingGraph() {
         <div className="flex gap-1">
           {/* Day labels */}
           <div className="flex flex-col flex-shrink-0" style={{ gap: `${gap}px`, width: 28 }}>
-            {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
+            {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
               <div
                 key={i}
                 className="flex items-center justify-end pr-1.5"
                 style={{ height: cellSize }}
               >
-                {[1, 3, 5].includes(i) && (
+                {[0, 2, 4].includes(i) && (
                   <span className="text-[8px] text-replay-text-muted">{d}</span>
                 )}
               </div>
@@ -111,7 +111,7 @@ export default function LandingGraph() {
               </span>
             </div>
           ))}
-          <span className="text-[9px] text-replay-text-muted ml-auto">+ {MOCK_ALBUMS.length - 6} more</span>
+          <span className="text-[9px] text-replay-text-muted ml-auto">+ {MOCK_ALBUMS.length - 6} More</span>
         </div>
       </div>
     </div>

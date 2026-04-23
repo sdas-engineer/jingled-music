@@ -11,13 +11,13 @@ export default function ProfileNotFound() {
           Profile not found
         </h1>
         <p className="text-sm text-replay-text-muted mb-8 max-w-xs">
-          This profile doesn't exist or has been set to private.
+          This profile does not exist or has been set to private.
         </p>
         <Link
           href="/"
           className="rounded-full border border-replay-border bg-replay-card px-5 py-2 text-sm text-replay-text-secondary hover:text-replay-text-primary transition-colors"
         >
-          Back to Replay
+          Back to Jingled
         </Link>
       </main>
     </div>

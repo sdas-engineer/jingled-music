@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { prisma } from "./prisma";
 import type { User } from "@/types";
 
-const SESSION_COOKIE = "replay-session";
+const SESSION_COOKIE = "jingled-session";
 const secret = new TextEncoder().encode(
   process.env.SESSION_SECRET ?? "fallback-dev-secret-change-in-production-32ch"
 );

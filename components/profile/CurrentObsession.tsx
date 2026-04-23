@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { hashColor } from "@/lib/utils";
 
 interface CurrentObsessionProps {
@@ -30,9 +31,11 @@ export default function CurrentObsession({ artist }: CurrentObsessionProps) {
           style={{ backgroundColor: color }}
         >
           {artist.albumImage && (
-            <img
+            <Image
               src={artist.albumImage}
               alt={artist.artist}
+              width={56}
+              height={56}
               className="w-full h-full object-cover"
             />
           )}

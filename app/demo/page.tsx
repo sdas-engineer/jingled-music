@@ -3,8 +3,8 @@ import Navbar from "@/components/layout/Navbar";
 import DemoProfileView from "@/components/demo/DemoProfileView";
 
 export const metadata: Metadata = {
-  title: "Demo Profile — Replay",
-  description: "See what a Replay profile looks like before connecting Spotify.",
+  title: "Demo Profile — Jingled",
+  description: "See what a Jingled profile looks like before connecting Spotify.",
 };
 
 export default function DemoPage() {

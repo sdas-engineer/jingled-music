@@ -56,3 +56,31 @@ export function avg(nums: number[]): number {
 export function clamp(n: number, min: number, max: number): number {
   return Math.min(Math.max(n, min), max);
 }
+
+export function rankKeysByCount<T>(
+  items: T[],
+  keyFn: (item: T) => string,
+  options?: { latestFn?: (item: T) => number }
+): string[] {
+  const stats = new Map<string, { count: number; latest: number }>();
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const key = keyFn(item);
+    const latest = options?.latestFn ? options.latestFn(item) : i;
+    const prev = stats.get(key);
+    if (!prev) {
+      stats.set(key, { count: 1, latest });
+    } else {
+      stats.set(key, {
+        count: prev.count + 1,
+        latest: Math.max(prev.latest, latest),
+      });
+    }
+  }
+  return Array.from(stats.entries())
+    .sort((a, b) => {
+      if (b[1].count !== a[1].count) return b[1].count - a[1].count;
+      return b[1].latest - a[1].latest;
+    })
+    .map(([key]) => key);
+}

@@ -1,25 +1,23 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { SignJWT } from "jose";
 import { getSpotifyAuthUrl } from "@/lib/spotify";
 
-function generateState(): string {
-  const array = new Uint8Array(16);
-  crypto.getRandomValues(array);
-  return Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
+const secret = new TextEncoder().encode(
+  process.env.SESSION_SECRET ?? "fallback-dev-secret-change-in-production-32ch"
+);
+
+async function generateState(): Promise<string> {
+  const nonce = crypto.randomUUID();
+  return new SignJWT({ nonce, type: "spotify_oauth_state" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("10m")
+    .sign(secret);
 }
 
 export async function GET() {
-  const state = generateState();
+  const state = await generateState();
   const authUrl = getSpotifyAuthUrl(state);
-
-  const cookieStore = await cookies();
-  cookieStore.set("spotify-oauth-state", state, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 60 * 10, // 10 minutes
-    path: "/",
-  });
 
   return NextResponse.redirect(authUrl);
 }

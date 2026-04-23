@@ -1,5 +1,5 @@
 {
-  "name": "replay",
+  "name": "jingled",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -14,17 +14,27 @@
   },
   "dependencies": {
     "@prisma/client": "^5.10.2",
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.17.14",
+    "@xyflow/react": "^12.10.2",
     "date-fns": "^3.6.0",
     "framer-motion": "^11.0.8",
     "jose": "^5.2.4",
     "next": "14.2.3",
+    "openai": "^6.34.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "three": "^0.184.0",
+    "three-stdlib": "^2.36.1",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/three": "^0.184.0",
     "autoprefixer": "^10.4.19",
     "eslint": "^8",
     "eslint-config-next": "14.2.3",

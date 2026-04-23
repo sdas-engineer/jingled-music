@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { buildDayMap, buildYearGrid, getMonthLabels, getTopArtistsFromPlays } from "@/lib/graph-data";
@@ -17,7 +18,8 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { username } = await params;
-  const slug = username.startsWith("@") ? username.slice(1) : username;
+  const normalized = decodeURIComponent(username);
+  const slug = normalized.startsWith("@") ? normalized.slice(1) : normalized;
 
   const user = await prisma.user.findUnique({
     where: { username: slug },
@@ -27,14 +29,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!user) return { title: "Profile not found" };
 
   return {
-    title: `${user.displayName} on Replay`,
-    description: `What did ${user.displayName}'s year sound like? See their full listening history on Replay.`,
+    title: `${user.displayName} on Jingled`,
+    description: `What did ${user.displayName}'s year sound like? See their full listening history on Jingled.`,
   };
 }
 
 export default async function UserProfilePage({ params }: PageProps) {
   const { username } = await params;
-  const slug = username.startsWith("@") ? username.slice(1) : username;
+  const normalized = decodeURIComponent(username);
+  const slug = normalized.startsWith("@") ? normalized.slice(1) : normalized;
 
   const user = await prisma.user.findUnique({
     where: { username: slug },
@@ -119,8 +122,11 @@ export default async function UserProfilePage({ params }: PageProps) {
               </p>
               <div className="grid sm:grid-cols-2 gap-2">
                 {topArtists.map((artist, i) => (
-                  <div
+                  <a
                     key={artist.artistId}
+                    href={`https://open.spotify.com/artist/${artist.artistId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="flex items-center gap-3 p-3 rounded-xl bg-replay-card border border-replay-border"
                   >
                     <span className="text-[10px] text-replay-text-muted w-4 text-right flex-shrink-0 font-mono">
@@ -128,7 +134,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                     </span>
                     <div className="w-8 h-8 rounded-full overflow-hidden bg-replay-surface border border-replay-border flex-shrink-0">
                       {artist.albumImage && (
-                        <img src={artist.albumImage} className="w-full h-full object-cover" alt="" />
+                        <Image src={artist.albumImage} className="w-full h-full object-cover" alt="" width={32} height={32} />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -139,7 +145,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                         {artist.playCount.toLocaleString()} plays
                       </p>
                     </div>
-                  </div>
+                  </a>
                 ))}
               </div>
             </section>
@@ -149,7 +155,7 @@ export default async function UserProfilePage({ params }: PageProps) {
           {typedPlays.length === 0 && (
             <div className="text-center py-12">
               <p className="text-sm text-replay-text-muted">
-                {user.displayName} hasn't synced their listening history yet.
+                {user.displayName} has not synced their listening history yet.
               </p>
             </div>
           )}
@@ -160,14 +166,20 @@ export default async function UserProfilePage({ params }: PageProps) {
         <div className="mx-auto max-w-4xl flex items-center justify-between">
           <a href="/" className="flex items-center gap-2 group">
             <div className="w-5 h-5 rounded bg-replay-accent flex items-center justify-center">
-              <span className="text-[10px] font-black text-black">R</span>
+              <svg viewBox="0 0 24 24" className="w-3 h-3 fill-none stroke-black stroke-[2.2]" aria-hidden>
+                <path
+                  d="M14 5v10.5a2.5 2.5 0 1 1-1-2V7.2l6-1.7v8a2.5 2.5 0 1 1-1-2V4z"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </div>
             <span className="text-xs text-replay-text-muted group-hover:text-replay-text-secondary transition-colors">
-              Replay
+              Jingled
             </span>
           </a>
           <p className="text-[11px] text-replay-text-muted">
-            Build your own at replay.app
+            Build your own at jingled.app
           </p>
         </div>
       </footer>

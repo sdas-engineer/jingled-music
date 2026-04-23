@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import Image from "next/image";
 import { format, parseISO } from "date-fns";
 import type { DayData } from "@/types";
 import { cn, formatDuration } from "@/lib/utils";
@@ -93,9 +94,11 @@ function DayTooltip({ dayData, x, y }: { dayData: DayData; x: number; y: number 
       <div className="glass-card rounded-xl p-3 min-w-[200px] shadow-2xl">
         <div className="flex items-center gap-2.5 mb-2">
           {album?.image ? (
-            <img
+            <Image
               src={album.image}
               alt={album.name}
+              width={36}
+              height={36}
               className="w-9 h-9 rounded object-cover flex-shrink-0"
             />
           ) : album ? (

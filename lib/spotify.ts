@@ -17,6 +17,10 @@ const SCOPES = [
   "user-read-email",
   "user-library-read",
   "user-read-currently-playing",
+  "playlist-read-private",
+  "playlist-read-collaborative",
+  "playlist-modify-private",
+  "playlist-modify-public",
 ].join(" ");
 
 export function getSpotifyAuthUrl(state: string): string {
@@ -93,6 +97,28 @@ async function spotifyFetch<T>(
   return res.json() as Promise<T>;
 }
 
+async function spotifyRequest<T>(input: {
+  endpoint: string;
+  accessToken: string;
+  method?: "GET" | "POST" | "PUT" | "DELETE";
+  body?: unknown;
+}): Promise<T> {
+  const res = await fetch(`${SPOTIFY_API_BASE}${input.endpoint}`, {
+    method: input.method ?? "GET",
+    headers: {
+      Authorization: `Bearer ${input.accessToken}`,
+      ...(input.body ? { "Content-Type": "application/json" } : {}),
+    },
+    body: input.body ? JSON.stringify(input.body) : undefined,
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Spotify API error: ${res.status} ${input.endpoint} ${text}`);
+  }
+  if (res.status === 204) return {} as T;
+  return (await res.json()) as T;
+}
+
 export async function getSpotifyProfile(accessToken: string): Promise<SpotifyProfile> {
   return spotifyFetch<SpotifyProfile>("/me", accessToken);
 }
@@ -152,4 +178,100 @@ export async function getValidAccessToken(userId: string): Promise<string> {
   });
 
   return tokens.accessToken;
+}
+
+export interface SpotifyPlaylistLite {
+  id: string;
+  name: string;
+  tracks: { total: number };
+  owner?: { id: string; display_name?: string | null };
+  public?: boolean | null;
+}
+
+export interface SpotifyTrackLite {
+  id: string;
+  name: string;
+  uri: string;
+  external_urls?: { spotify?: string };
+  artists: { id: string; name: string }[];
+  album: { id: string; name: string; images?: { url: string }[] };
+}
+
+export async function searchTracks(accessToken: string, query: string, limit = 8): Promise<SpotifyTrackLite[]> {
+  const safeLimit = Math.max(1, Math.min(10, limit));
+  const params = new URLSearchParams({
+    q: query,
+    type: "track",
+    limit: String(safeLimit),
+  });
+  const data = await spotifyRequest<{ tracks: { items: SpotifyTrackLite[] } }>({
+    endpoint: `/search?${params.toString()}`,
+    accessToken,
+  });
+  return data.tracks?.items ?? [];
+}
+
+export async function getMyPlaylists(accessToken: string, limit = 30): Promise<SpotifyPlaylistLite[]> {
+  const params = new URLSearchParams({ limit: String(Math.max(1, Math.min(50, limit))) });
+  const data = await spotifyRequest<{ items: SpotifyPlaylistLite[] }>({
+    endpoint: `/me/playlists?${params.toString()}`,
+    accessToken,
+  });
+  return data.items ?? [];
+}
+
+export async function createPlaylist(input: {
+  accessToken: string;
+  userId: string;
+  name: string;
+  description?: string;
+  isPublic?: boolean;
+}): Promise<SpotifyPlaylistLite> {
+  return spotifyRequest<SpotifyPlaylistLite>({
+    endpoint: `/users/${encodeURIComponent(input.userId)}/playlists`,
+    accessToken: input.accessToken,
+    method: "POST",
+    body: {
+      name: input.name,
+      description: input.description ?? "",
+      public: Boolean(input.isPublic),
+    },
+  });
+}
+
+export async function addTracksToPlaylist(input: {
+  accessToken: string;
+  playlistId: string;
+  trackUris: string[];
+}): Promise<{ snapshot_id: string }> {
+  return spotifyRequest<{ snapshot_id: string }>({
+    endpoint: `/playlists/${encodeURIComponent(input.playlistId)}/tracks`,
+    accessToken: input.accessToken,
+    method: "POST",
+    body: { uris: input.trackUris },
+  });
+}
+
+export async function removeTracksFromPlaylist(input: {
+  accessToken: string;
+  playlistId: string;
+  trackUris: string[];
+}): Promise<{ snapshot_id: string }> {
+  return spotifyRequest<{ snapshot_id: string }>({
+    endpoint: `/playlists/${encodeURIComponent(input.playlistId)}/tracks`,
+    accessToken: input.accessToken,
+    method: "DELETE",
+    body: { tracks: input.trackUris.map((uri) => ({ uri })) },
+  });
+}
+
+export async function deletePlaylist(input: {
+  accessToken: string;
+  playlistId: string;
+}): Promise<void> {
+  await spotifyRequest<{}>({
+    endpoint: `/playlists/${encodeURIComponent(input.playlistId)}/followers`,
+    accessToken: input.accessToken,
+    method: "DELETE",
+  });
 }

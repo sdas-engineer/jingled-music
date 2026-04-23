@@ -95,6 +95,7 @@ export interface Era {
   dominantAlbum: string | null;
   albumImage: string | null;
   playCount: number;
+  eraConfidence: number;
 }
 
 export interface SpotifyTokens {
@@ -141,4 +142,52 @@ export interface PublicProfile {
   profileImage: string | null;
   headline: string;
   joinedAt: Date;
+}
+
+export type BrainChatRole = "user" | "assistant" | "system";
+
+export interface BrainChatMessage {
+  role: BrainChatRole;
+  content: string;
+}
+
+export type BrainChatToolName =
+  | "get_recent_plays_window"
+  | "get_current_brain_snapshot_summary"
+  | "get_mood_trend"
+  | "suggest_tracks_for_state"
+  | "search_spotify_tracks"
+  | "list_spotify_playlists"
+  | "create_spotify_playlist"
+  | "add_tracks_to_playlist"
+  | "remove_tracks_from_playlist"
+  | "delete_spotify_playlist";
+
+export interface BrainChatToolEvent {
+  tool: BrainChatToolName;
+  summary: string;
+}
+
+export interface BrainChatRequest {
+  messages: BrainChatMessage[];
+  mode?: "recent" | "daily" | "cluster";
+  selectedDate?: string;
+  selectedCluster?: string;
+  recommendationMode?: "discovery" | "familiar";
+  avoidTrackIds?: string[];
+  diversitySeed?: number;
+}
+
+export interface BrainChatResponse {
+  reply: string;
+  toolEvents: BrainChatToolEvent[];
+  songCards?: BrainChatSongCard[];
+}
+
+export interface BrainChatSongCard {
+  trackId: string;
+  trackName: string;
+  artistName: string;
+  spotifyUrl: string;
+  albumImage?: string | null;
 }

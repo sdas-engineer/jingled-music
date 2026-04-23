@@ -1,11 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { jwtVerify } from "jose";
 import { exchangeCode, getSpotifyProfile } from "@/lib/spotify";
 import { prisma } from "@/lib/prisma";
 import { createSession, setSessionCookie } from "@/lib/auth";
+import { syncRecentPlaysForUser } from "@/lib/sync";
 import { generateUsername, slugify } from "@/lib/utils";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+const secret = new TextEncoder().encode(
+  process.env.SESSION_SECRET ?? "fallback-dev-secret-change-in-production-32ch"
+);
+
+async function isValidOAuthState(state: string): Promise<boolean> {
+  try {
+    const { payload } = await jwtVerify(state, secret);
+    return payload.type === "spotify_oauth_state" && typeof payload.nonce === "string";
+  } catch {
+    return false;
+  }
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -21,14 +34,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${APP_URL}/?error=missing_params`);
   }
 
-  const cookieStore = await cookies();
-  const storedState = cookieStore.get("spotify-oauth-state")?.value;
-
-  if (!storedState || storedState !== state) {
+  if (!(await isValidOAuthState(state))) {
     return NextResponse.redirect(`${APP_URL}/?error=invalid_state`);
   }
-
-  cookieStore.delete("spotify-oauth-state");
 
   try {
     const tokens = await exchangeCode(code);
@@ -71,6 +79,9 @@ export async function GET(request: NextRequest) {
 
     const sessionToken = await createSession(user.id);
     const cookieOpts = setSessionCookie(sessionToken);
+
+    // Best effort: hydrate dashboard/profile with recent data immediately after first login.
+    await syncRecentPlaysForUser(user.id, tokens.accessToken).catch(() => {});
 
     const response = NextResponse.redirect(`${APP_URL}/dashboard`);
     response.cookies.set(cookieOpts);

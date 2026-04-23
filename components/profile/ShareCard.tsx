@@ -10,7 +10,8 @@ interface ShareCardProps {
 export default function ShareCard({ username, displayName }: ShareCardProps) {
   const [copied, setCopied] = useState(false);
 
-  const profileUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/@${username}`;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://127.0.0.1:3000";
+  const profileUrl = `${appUrl}/@${username}`;
 
   const handleCopy = async () => {
     try {
@@ -49,7 +50,7 @@ export default function ShareCard({ username, displayName }: ShareCardProps) {
       <div className="flex items-center gap-2 mt-3">
         <button
           onClick={() => {
-            const text = `Check out my music year on Replay — a GitHub-style graph of my listening history 🎵 ${profileUrl}`;
+            const text = `Check out my music year on Jingled — a GitHub-style graph of my listening history 🎵 ${profileUrl}`;
             const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
             window.open(twitterUrl, "_blank", "noopener,noreferrer");
           }}

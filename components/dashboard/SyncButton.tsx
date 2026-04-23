@@ -34,7 +34,12 @@ export default function SyncButton() {
   };
 
   return (
-    <div className="flex flex-col items-start gap-1">
+    <div className="flex items-center gap-2">
+      {message && (
+        <p className={`text-[10px] whitespace-nowrap ${state === "error" ? "text-red-400" : "text-replay-text-muted"}`}>
+          {message}
+        </p>
+      )}
       <button
         onClick={handleSync}
         disabled={state === "syncing"}
@@ -64,11 +69,6 @@ export default function SyncButton() {
           </>
         )}
       </button>
-      {message && (
-        <p className={`text-[10px] ${state === "error" ? "text-red-400" : "text-replay-text-muted"}`}>
-          {message}
-        </p>
-      )}
     </div>
   );
 }

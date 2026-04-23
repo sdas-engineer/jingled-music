@@ -3,14 +3,12 @@ import {
   startOfYear,
   endOfYear,
   eachWeekOfInterval,
-  startOfWeek,
   addDays,
-  isSameDay,
   parseISO,
   getMonth,
 } from "date-fns";
 import type { Play, DayData, WeekData, MonthLabel, AlbumSummary, HourBlock, DayDetail } from "@/types";
-import { hashColor } from "./utils";
+import { hashColor, rankKeysByCount } from "./utils";
 import { detectDayMood } from "./mood";
 
 export function buildDayMap(plays: Play[]): Map<string, DayData> {
@@ -36,7 +34,6 @@ export function buildDayMap(plays: Play[]): Map<string, DayData> {
   }
 
   for (const [, day] of dayMap) {
-    day.totalMinutes = Math.round(day.totalMinutes);
     day.dominantAlbum = findDominantAlbum(day.plays);
   }
 
@@ -45,25 +42,10 @@ export function buildDayMap(plays: Play[]): Map<string, DayData> {
 
 function findDominantAlbum(plays: Play[]): AlbumSummary | null {
   if (plays.length === 0) return null;
-
-  const albumCounts = new Map<string, { count: number; play: Play }>();
-  for (const play of plays) {
-    const key = play.albumId;
-    if (!albumCounts.has(key)) {
-      albumCounts.set(key, { count: 0, play });
-    }
-    albumCounts.get(key)!.count++;
-  }
-
-  let maxCount = 0;
-  let dominantPlay: Play | null = null;
-  for (const { count, play } of albumCounts.values()) {
-    if (count > maxCount) {
-      maxCount = count;
-      dominantPlay = play;
-    }
-  }
-
+  const rankedAlbumIds = rankKeysByCount(plays, (p) => p.albumId);
+  const dominantPlay = rankedAlbumIds.length > 0
+    ? [...plays].reverse().find((p) => p.albumId === rankedAlbumIds[0]) ?? null
+    : null;
   if (!dominantPlay) return null;
 
   return {
@@ -81,7 +63,7 @@ export function buildYearGrid(year: number, dayMap: Map<string, DayData>): WeekD
 
   const weekStarts = eachWeekOfInterval(
     { start: yearStart, end: yearEnd },
-    { weekStartsOn: 0 } // Sunday
+    { weekStartsOn: 1 } // Monday
   );
 
   return weekStarts.map((weekStart, weekIndex) => {
@@ -102,13 +84,26 @@ export function buildYearGrid(year: number, dayMap: Map<string, DayData>): WeekD
 export function getMonthLabels(year: number, weeks: WeekData[]): MonthLabel[] {
   const labels: MonthLabel[] = [];
   const seen = new Set<number>();
+  const firstWeekForMonth = new Map<number, number>();
 
   for (const week of weeks) {
+    let weekHasMonthStart = false;
     for (const day of week.days) {
       if (!day) continue;
       const date = parseISO(day.date);
       const month = getMonth(date);
-      if (!seen.has(month) && date.getDate() <= 7) {
+      if (!firstWeekForMonth.has(month)) {
+        firstWeekForMonth.set(month, week.weekIndex);
+      }
+      if (date.getDate() === 1 && !seen.has(month)) {
+        weekHasMonthStart = true;
+      }
+    }
+    if (weekHasMonthStart) {
+      const dayWithMonthStart = week.days.find((d) => d && parseISO(d.date).getDate() === 1);
+      if (dayWithMonthStart) {
+        const date = parseISO(dayWithMonthStart.date);
+        const month = getMonth(date);
         seen.add(month);
         labels.push({
           label: format(date, "MMM"),
@@ -117,6 +112,18 @@ export function getMonthLabels(year: number, weeks: WeekData[]): MonthLabel[] {
       }
     }
   }
+
+  for (const [month, weekIndex] of firstWeekForMonth.entries()) {
+    if (seen.has(month)) continue;
+    const date = new Date(year, month, 1);
+    labels.push({
+      label: format(date, "MMM"),
+      weekIndex,
+    });
+    seen.add(month);
+  }
+
+  labels.sort((a, b) => a.weekIndex - b.weekIndex);
 
   return labels;
 }
@@ -141,43 +148,16 @@ export function buildDayDetail(date: string, dayData: DayData): DayDetail {
 
 function findTopTrack(plays: Play[]): Play | null {
   if (plays.length === 0) return null;
-
-  const counts = new Map<string, { count: number; play: Play }>();
-  for (const play of plays) {
-    if (!counts.has(play.trackId)) {
-      counts.set(play.trackId, { count: 0, play });
-    }
-    counts.get(play.trackId)!.count++;
-  }
-
-  let max = 0;
-  let winner: Play | null = null;
-  for (const { count, play } of counts.values()) {
-    if (count > max) {
-      max = count;
-      winner = play;
-    }
-  }
-  return winner;
+  const rankedTrackIds = rankKeysByCount(plays, (p) => p.trackId);
+  return rankedTrackIds.length > 0
+    ? [...plays].reverse().find((p) => p.trackId === rankedTrackIds[0]) ?? null
+    : null;
 }
 
 function findTopArtist(plays: Play[]): string | null {
   if (plays.length === 0) return null;
-
-  const counts = new Map<string, number>();
-  for (const play of plays) {
-    counts.set(play.artistName, (counts.get(play.artistName) ?? 0) + 1);
-  }
-
-  let max = 0;
-  let winner: string | null = null;
-  for (const [artist, count] of counts) {
-    if (count > max) {
-      max = count;
-      winner = artist;
-    }
-  }
-  return winner;
+  const rankedArtists = rankKeysByCount(plays, (p) => p.artistName);
+  return rankedArtists[0] ?? null;
 }
 
 function buildHourBlocks(plays: Play[]): HourBlock[] {
@@ -213,10 +193,12 @@ export function getTopArtistsFromPlays(
   plays: Play[],
   limit = 5
 ): { artist: string; artistId: string; playCount: number; albumImage: string | null }[] {
-  const artistMap = new Map<
-    string,
-    { artist: string; artistId: string; playCount: number; albumImage: string | null }
-  >();
+  const artistMap = new Map<string, {
+    artist: string;
+    artistId: string;
+    playCount: number;
+    albums: Map<string, { count: number; image: string | null }>;
+  }>();
 
   for (const play of plays) {
     if (!artistMap.has(play.artistId)) {
@@ -224,16 +206,30 @@ export function getTopArtistsFromPlays(
         artist: play.artistName,
         artistId: play.artistId,
         playCount: 0,
-        albumImage: play.albumImage,
+        albums: new Map<string, { count: number; image: string | null }>(),
       });
     }
-    artistMap.get(play.artistId)!.playCount++;
-    if (play.albumImage && !artistMap.get(play.artistId)!.albumImage) {
-      artistMap.get(play.artistId)!.albumImage = play.albumImage;
-    }
+    const entry = artistMap.get(play.artistId)!;
+    entry.playCount++;
+    const albumStats = entry.albums.get(play.albumId) ?? { count: 0, image: play.albumImage };
+    albumStats.count++;
+    if (!albumStats.image && play.albumImage) albumStats.image = play.albumImage;
+    entry.albums.set(play.albumId, albumStats);
   }
 
-  return Array.from(artistMap.values())
+  const ranked = Array.from(artistMap.values())
+    .map((entry) => {
+      const topAlbumImage = Array.from(entry.albums.values())
+        .sort((a, b) => b.count - a.count)[0]?.image ?? null;
+      return {
+        artist: entry.artist,
+        artistId: entry.artistId,
+        playCount: entry.playCount,
+        albumImage: topAlbumImage,
+      };
+    })
     .sort((a, b) => b.playCount - a.playCount)
     .slice(0, limit);
+
+  return ranked;
 }

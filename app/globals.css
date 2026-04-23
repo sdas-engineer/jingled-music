@@ -153,3 +153,22 @@ body {
   height: 1px;
   background: #1f1f1f;
 }
+
+/* React Flow controls - dark theme for brain workspace */
+.react-flow__controls {
+  box-shadow: none !important;
+}
+
+.react-flow__controls-button {
+  background: rgba(3, 12, 22, 0.92) !important;
+  border-bottom: 1px solid rgba(103, 232, 249, 0.2) !important;
+  color: #a5f3fc !important;
+}
+
+.react-flow__controls-button:hover {
+  background: rgba(8, 30, 48, 0.95) !important;
+}
+
+.react-flow__controls-button svg {
+  fill: #a5f3fc !important;
+}

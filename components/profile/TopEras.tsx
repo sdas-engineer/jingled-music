@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { format, parseISO } from "date-fns";
 import type { Era } from "@/types";
 import { hashColor } from "@/lib/utils";
@@ -38,7 +39,7 @@ export default function TopEras({ eras }: TopErasProps) {
                 style={{ backgroundColor: color }}
               >
                 {era.albumImage && (
-                  <img src={era.albumImage} alt={era.label} className="w-full h-full object-cover" />
+                  <Image src={era.albumImage} alt={era.label} width={32} height={32} className="w-full h-full object-cover" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
@@ -54,6 +55,9 @@ export default function TopEras({ eras }: TopErasProps) {
                   {era.playCount}
                 </p>
                 <p className="text-[9px] text-replay-text-muted">plays</p>
+                <p className="text-[9px] text-cyan-300/80 mt-0.5">
+                  {Math.round(era.eraConfidence * 100)}% conf
+                </p>
               </div>
             </div>
           );

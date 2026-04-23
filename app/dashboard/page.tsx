@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -8,6 +9,7 @@ import { getTopArtistsFromPlays } from "@/lib/graph-data";
 import Navbar from "@/components/layout/Navbar";
 import ContributionGraph from "@/components/graph/ContributionGraph";
 import SyncButton from "@/components/dashboard/SyncButton";
+import ErasPanel from "@/components/dashboard/ErasPanel";
 import type { Play } from "@/types";
 
 export const metadata: Metadata = {
@@ -44,14 +46,25 @@ export default async function DashboardPage() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-replay-text-muted mb-2">
-                  Your replay
+                  Your Jingled
                 </p>
-                <h1 className="text-2xl font-bold text-replay-text-primary mb-2">
-                  {user.displayName}
-                </h1>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-replay-card border border-replay-border flex items-center justify-center">
+                    {user.profileImage ? (
+                      <Image src={user.profileImage} alt={user.displayName} width={40} height={40} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-sm font-semibold text-replay-text-secondary">
+                        {user.displayName.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <h1 className="text-2xl font-bold text-replay-text-primary">
+                    {user.displayName}
+                  </h1>
+                </div>
                 {typedPlays.length > 0 ? (
                   <p className="text-sm text-replay-text-secondary italic max-w-sm">
-                    "{headline}"
+                    &ldquo;{headline}&rdquo;
                   </p>
                 ) : (
                   <p className="text-sm text-replay-text-muted">
@@ -96,7 +109,7 @@ export default async function DashboardPage() {
           <section className="mb-12">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-sm font-semibold text-replay-text-primary">
-                {new Date().getFullYear()} listening history
+                Listening history
               </h2>
               {typedPlays.length === 0 && (
                 <span className="text-xs text-replay-text-muted">
@@ -114,34 +127,7 @@ export default async function DashboardPage() {
           {typedPlays.length > 0 && (
             <div className="grid sm:grid-cols-2 gap-6">
               {/* Eras */}
-              {eras.length > 0 && (
-                <section>
-                  <h2 className="text-sm font-semibold text-replay-text-primary mb-4">
-                    Your eras
-                  </h2>
-                  <div className="space-y-2">
-                    {eras.slice(0, 4).map((era, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center gap-3 p-3 rounded-xl bg-replay-card border border-replay-border"
-                      >
-                        <div
-                          className="w-8 h-8 rounded-lg flex-shrink-0 border border-replay-border"
-                          style={{ backgroundColor: era.albumImage ? undefined : "#1DB954" + "33" }}
-                        >
-                          {era.albumImage && (
-                            <img src={era.albumImage} className="w-full h-full object-cover rounded-lg" alt="" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-replay-text-primary truncate">{era.label}</p>
-                          <p className="text-[10px] text-replay-text-muted">{era.playCount} plays</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
+              {eras.length > 0 && <ErasPanel eras={eras} />}
 
               {/* Top artists */}
               {topArtists.length > 0 && (
@@ -151,8 +137,11 @@ export default async function DashboardPage() {
                   </h2>
                   <div className="space-y-2">
                     {topArtists.map((artist, i) => (
-                      <div
+                      <a
                         key={artist.artistId}
+                        href={`https://open.spotify.com/artist/${artist.artistId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="flex items-center gap-3 p-3 rounded-xl bg-replay-card border border-replay-border"
                       >
                         <span className="text-[10px] text-replay-text-muted w-4 text-right flex-shrink-0 font-mono">
@@ -162,7 +151,7 @@ export default async function DashboardPage() {
                           className="w-8 h-8 rounded-full flex-shrink-0 border border-replay-border bg-replay-surface"
                         >
                           {artist.albumImage && (
-                            <img src={artist.albumImage} className="w-full h-full object-cover rounded-full" alt="" />
+                            <Image src={artist.albumImage} className="w-full h-full object-cover rounded-full" alt="" width={32} height={32} />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -173,7 +162,7 @@ export default async function DashboardPage() {
                             {artist.playCount} plays
                           </p>
                         </div>
-                      </div>
+                      </a>
                     ))}
                   </div>
                 </section>

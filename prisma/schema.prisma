@@ -20,10 +20,26 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  plays   Play[]
-  profile Profile?
+  plays              Play[]
+  profile            Profile?
+  chatConversations  BrainChatConversation[]
 
   @@map("users")
+}
+
+model BrainChatConversation {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  messages  Json
+  songCards Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, updatedAt])
+  @@map("brain_chat_conversations")
 }
 
 model Play {

@@ -10,21 +10,21 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Replay — What did your life sound like?",
-    template: "%s · Replay",
+    default: "Jingled — What did your life sound like?",
+    template: "%s · Jingled",
   },
   description:
-    "Replay transforms your Spotify listening history into a beautiful public profile. GitHub for your music life.",
-  keywords: ["spotify", "music", "listening history", "profile", "replay"],
+    "Jingled transforms your Spotify listening history into a beautiful public profile. GitHub for your music life.",
+  keywords: ["spotify", "music", "listening history", "profile", "jingled"],
   openGraph: {
     type: "website",
-    siteName: "Replay",
-    title: "Replay — What did your life sound like?",
+    siteName: "Jingled",
+    title: "Jingled — What did your life sound like?",
     description: "A GitHub-style contribution graph for your Spotify listening history.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Replay",
+    title: "Jingled",
     description: "A GitHub-style contribution graph for your Spotify listening history.",
   },
 };

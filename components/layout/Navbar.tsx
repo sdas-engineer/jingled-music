@@ -21,15 +21,50 @@ export default function Navbar() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (!user) return;
+
+    const configured = Number.parseInt(process.env.NEXT_PUBLIC_AUTO_SYNC_INTERVAL_MS ?? "", 10);
+    const intervalMs = Number.isFinite(configured) && configured > 0 ? configured : 5 * 60 * 1000;
+
+    let syncing = false;
+    const run = async () => {
+      if (syncing) return;
+      if (document.visibilityState !== "visible") return;
+      syncing = true;
+      try {
+        await fetch("/api/spotify/sync", { method: "POST" });
+      } catch {
+        // Best effort background sync while user is active.
+      } finally {
+        syncing = false;
+      }
+    };
+
+    // Kick once shortly after mount so users don't wait full interval.
+    const initial = window.setTimeout(run, 2000);
+    const interval = window.setInterval(run, intervalMs);
+    return () => {
+      window.clearTimeout(initial);
+      window.clearInterval(interval);
+    };
+  }, [user]);
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-replay-border bg-replay-bg/80 backdrop-blur-xl">
       <div className="mx-auto max-w-7xl px-6 flex items-center justify-between h-14">
         <Link href="/" className="flex items-center gap-2 group">
           <div className="w-6 h-6 rounded bg-replay-accent flex items-center justify-center">
-            <span className="text-xs font-black text-black">R</span>
+            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-none stroke-black stroke-[2.2]" aria-hidden>
+              <path
+                d="M14 5v10.5a2.5 2.5 0 1 1-1-2V7.2l6-1.7v8a2.5 2.5 0 1 1-1-2V4z"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </div>
           <span className="text-sm font-semibold tracking-tight text-replay-text-primary group-hover:text-white transition-colors">
-            Replay
+            Jingled
           </span>
         </Link>
 
@@ -49,6 +84,12 @@ export default function Navbar() {
                 className="text-sm text-replay-text-secondary hover:text-replay-text-primary transition-colors"
               >
                 Profile
+              </Link>
+              <Link
+                href="/brain"
+                className="text-sm text-replay-text-secondary hover:text-replay-text-primary transition-colors"
+              >
+                Brain
               </Link>
               <Link
                 href="/api/auth/logout"

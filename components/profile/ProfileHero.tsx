@@ -58,7 +58,7 @@ export default function ProfileHero({ profile, stats }: ProfileHeroProps) {
               <span className="text-sm text-replay-text-muted">@{profile.username}</span>
             </div>
             <p className="text-sm sm:text-base text-replay-text-secondary italic leading-relaxed max-w-lg">
-              "{profile.headline}"
+              &ldquo;{profile.headline}&rdquo;
             </p>
           </div>
         </div>
